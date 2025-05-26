@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta's AI-Driven Predictive Maintenance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices:
+        - Overview: Key metrics (95% reduction, $100M+ savings, 2.5% utilization increase) as interactive stat cards (HTML/Tailwind). Goal: Inform/Engage. Interaction: Hover for emphasis.
+        - The Imperative: Comparative text blocks (HTML/Tailwind) explaining traditional vs. predictive. Goal: Inform.
+        - APEX Program: Visual flow representation (HTML/Tailwind with icons) of data acquisition to insight. Goal: Organize/Inform. Interaction: Clickable steps for detail pop-ups (modal-like).
+        - Engine Strategies: Tabbed interface (HTML/JS) for CFM56 and GE90 details. Goal: Compare/Inform.
+        - Quantifiable Impact: Bar chart for 'Reduction in Maintenance-Related Cancellations' (Chart.js - 5600 to 55). Bar chart for 'Annual Cost Savings' (Chart.js - showing range if possible, or $100M+). Interactive HTML table for 'Key Operational and Financial Benefits'. Goal: Compare/Inform. Interaction: Chart tooltips, sortable table.
+        - Future & Challenges: Accordion/expandable list for emerging tech (Digital Twins, Drones, Additive Mfg) and challenges (Cultural Shift, Data Security, Regulatory). Goal: Inform. Interaction: Click to expand/collapse.
+        - Ask the Expert: Text input, button, and response area. Goal: Inform/Engage. Justification: Provides interactive Q&A powered by Gemini API. Method: HTML/Tailwind + JavaScript (Fetch API).
+        - All sections feature introductory paragraphs explaining their purpose and content. No SVG/Mermaid used. Chart.js for all charts. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #343A40; }
+        .nav-link { transition: color 0.3s ease, border-bottom-color 0.3s ease; }
+        .nav-link.active { color: #4A90E2; border-bottom: 2px solid #4A90E2; }
+        .nav-link:hover { color: #4A90E2; }
+        .stat-card { background-color: #FFFFFF; border-left: 4px solid #4A90E2; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tab-button { transition: background-color 0.3s ease, color 0.3s ease; }
+        .tab-button.active { background-color: #4A90E2; color: white; }
+        .accordion-button.active { background-color: #E9ECEF; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; padding: 10px; background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        @media (min-width: 768px) { .chart-container { height: 350px; max-height: 400px;} }
+        h1, h2, h3 { color: #2c3e50; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+        }
+        .section-intro { font-size: 1.1rem; color: #555; margin-bottom: 1.5rem; }
+        .kpi-value { font-size: 2.5rem; font-weight: bold; color: #4A90E2; }
+        .kpi-label { font-size: 1rem; color: #555; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-[#2c3e50]">Delta's Predictive Maintenance</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 active">Overview</a>
+                        <a href="#imperative" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">The Imperative</a>
+                        <a href="#apex" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">APEX Program</a>
+                        <a href="#engines" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Engine Strategies</a>
+                        <a href="#impact" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Quantifiable Impact</a>
+                        <a href="#future" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Future & Challenges</a>
+                        <a href="#ask-expert" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Ask Expert</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#4A90E2]">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#overview" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 active">Overview</a>
+                    <a href="#imperative" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">The Imperative</a>
+                    <a href="#apex" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">APEX Program</a>
+                    <a href="#engines" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">Engine Strategies</a>
+                    <a href="#impact" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">Quantifiable Impact</a>
+                    <a href="#future" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">Future & Challenges</a>
+                    <a href="#ask-expert" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">Ask Expert</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <section id="overview" class="content-section active pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">Delta's AI-Driven Predictive Maintenance: An Overview</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">
+                This section provides a high-level summary of Delta Air Lines' pioneering approach to aviation maintenance. Discover how leveraging advanced data analytics and Artificial Intelligence (AI) through its APEX program has revolutionized engine reliability, minimized operational disruptions, and achieved significant cost savings, setting new benchmarks in the industry.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="stat-card p-6 rounded-lg shadow-lg transition-all duration-300 ease-in-out">
+                    <div class="kpi-value">95%</div>
+                    <div class="kpi-label">Reduction in Maintenance-Related Cancellations</div>
+                    <p class="text-sm text-gray-600 mt-2">From 5,600 in 2010 to just 55 in 2018, showcasing a dramatic improvement in operational reliability.</p>
+                </div>
+                <div class="stat-card p-6 rounded-lg shadow-lg transition-all duration-300 ease-in-out">
+                    <div class="kpi-value">$100M+</div>
+                    <div class="kpi-label">Annual Cost Savings</div>
+                    <p class="text-sm text-gray-600 mt-2">Achieved through optimized maintenance schedules, reduced unscheduled repairs, and efficient parts inventory.</p>
+                </div>
+                <div class="stat-card p-6 rounded-lg shadow-lg transition-all duration-300 ease-in-out">
+                    <div class="kpi-value">2.5%</div>
+                    <div class="kpi-label">Increase in Aircraft Utilization</div>
+                    <p class="text-sm text-gray-600 mt-2">Aircraft spend more time in revenue-generating service due to fewer unexpected groundings.</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">Executive Summary Insights</h3>
+                <p class="text-gray-700 leading-relaxed">
+                    Delta Air Lines stands at the forefront of aviation maintenance, leveraging advanced data analytics and AI to revolutionize its MRO operations. This proactive approach, primarily driven by its proprietary Advanced Predictive Engine (APEX) program, enables the airline to anticipate and prevent unexpected engine component failures, significantly enhancing fleet reliability and optimizing operational costs. The integration of AI and data analytics into Delta TechOps' MRO strategy is not merely an efficiency gain but a fundamental shift that bolsters safety, improves aircraft utilization, and sets new industry benchmarks for operational excellence.
+                </p>
+            </div>
+        </section>
+
+        <section id="imperative" class="content-section pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">The Strategic Imperative for Predictive Maintenance</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">
+                Explore the critical reasons behind the aviation industry's shift from traditional maintenance practices to a predictive approach. This section highlights the limitations of reactive and time-based maintenance, the immense potential of data generated by modern aircraft, and the transformative role of AI in enhancing safety, efficiency, and economic performance.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">Traditional Maintenance: Limitations</h3>
+                    <p class="text-gray-700 mb-2"><strong class="text-[#F5A623]">Reactive Approach:</strong> Addressing issues only after failure, leading to costly disruptions and downtime.</p>
+                    <p class="text-gray-700 mb-2"><strong class="text-[#F5A623]">Time-Based Approach:</strong> Scheduled inspections at fixed intervals, often resulting in unnecessary maintenance or missed early warnings.</p>
+                    <p class="text-gray-700 leading-relaxed mt-3">This conventional approach often led to inefficiencies, significant financial losses due to aircraft downtime, logistical complexities, and the cascading impact of flight delays or cancellations.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">Predictive Maintenance: The Solution</h3>
+                    <p class="text-gray-700 mb-2"><strong class="text-[#4A90E2]">Data-Driven Insights:</strong> Leveraging terabytes of sensor data per flight to identify anomalies.</p>
+                    <p class="text-gray-700 mb-2"><strong class="text-[#4A90E2]">AI-Powered Predictions:</strong> Using AI/ML to forecast potential failures weeks or months in advance.</p>
+                    <p class="text-gray-700 leading-relaxed mt-3">This proactive paradigm enhances safety, reduces costs by up to 30%, decreases unscheduled events by 70-75%, increases aircraft availability by 20%, and extends asset lifespan.</p>
+                </div>
+            </div>
+             <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-2 text-[#2c3e50]">The Data Deluge & AI's Role</h3>
+                <p class="text-gray-700 leading-relaxed">Modern aircraft generate immense volumes of data (terabytes per flight) from thousands of sensors. This "big data" is too complex for human analysis alone. AI algorithms are crucial for processing this information, detecting subtle patterns indicative of impending failures, and transforming raw data into actionable insights for proactive maintenance scheduling.</p>
+            </div>
+        </section>
+
+        <section id="apex" class="content-section pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">Delta TechOps' APEX Program</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">
+                Dive into the heart of Delta's predictive maintenance strategy: the Advanced Predictive Engine (APEX) program. This section outlines APEX's architecture, from robust data acquisition to sophisticated AI-driven analysis, and highlights its capability to project maintenance needs far into the future, enabling proactive and optimized MRO operations.
+            </p>
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-2xl font-semibold mb-4 text-[#2c3e50]">APEX: Architecture and Application</h3>
+                <p class="text-gray-700 leading-relaxed">
+                    APEX is a proprietary predictive analytics platform powered by AI, designed to collect and analyze real-time data throughout an engine's lifecycle. It optimizes engine performance and efficiently schedules shop visits.
+                </p>
+                <div class="mt-6 space-y-4">
+                    <div class="flex items-start p-4 rounded-md hover:bg-gray-50 transition-colors cursor-pointer apex-step" data-title="Data Acquisition" data-details="Thousands of sensors on aircraft collect vast amounts of data (temperature, pressure, vibration, etc.), streamed to ground centers. This includes engine health, aircraft performance, and even weather data.">
+                        <span class="text-2xl mr-4 text-[#4A90E2]">📊</span>
+                        <div>
+                            <h4 class="font-semibold text-lg">1. Data Acquisition</h4>
+                            <p class="text-sm text-gray-600">Continuous collection of sensor data from aircraft systems.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start p-4 rounded-md hover:bg-gray-50 transition-colors cursor-pointer apex-step" data-title="AI & Machine Learning Analysis" data-details="Advanced AI algorithms and machine learning techniques process real-time and historical data. They detect subtle anomalies, identify irregular patterns, and predict potential failures with high accuracy using sophisticated pattern recognition.">
+                        <span class="text-2xl mr-4 text-[#4A90E2]">🧠</span>
+                        <div>
+                            <h4 class="font-semibold text-lg">2. AI & Machine Learning Analysis</h4>
+                            <p class="text-sm text-gray-600">Sophisticated algorithms process data to detect anomalies and predict failures.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start p-4 rounded-md hover:bg-gray-50 transition-colors cursor-pointer apex-step" data-title="Extended Predictive Horizon" data-details="APEX allows Delta TechOps to project maintenance needs 18 to 24 months into the future. This long-term visibility is crucial for timely parts procurement and optimizing shop visit schedules, enabling truly proactive planning.">
+                        <span class="text-2xl mr-4 text-[#4A90E2]">🔮</span>
+                        <div>
+                            <h4 class="font-semibold text-lg">3. Extended Predictive Horizon</h4>
+                            <p class="text-sm text-gray-600">Projects maintenance needs 18-24 months in advance for proactive planning.</p>
+                        </div>
+                    </div>
+                     <div class="flex items-start p-4 rounded-md hover:bg-gray-50 transition-colors cursor-pointer apex-step" data-title="Actionable Insights & Optimized Scheduling" data-details="The analysis results in actionable insights that inform maintenance decisions. This allows Delta to schedule maintenance precisely when needed, often during off-peak hours, moving from reactive fixes to proactive interventions.">
+                        <span class="text-2xl mr-4 text-[#4A90E2]">💡</span>
+                        <div>
+                            <h4 class="font-semibold text-lg">4. Actionable Insights & Optimized Scheduling</h4>
+                            <p class="text-sm text-gray-600">Transforms data into concrete actions for efficient MRO operations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="engines" class="content-section pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">Engine-Specific Predictive Maintenance Strategies</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">
+                Delta's APEX program is adaptable across a diverse fleet. This section details how predictive maintenance strategies are applied to specific engine series, including the widely used CFM56 (powering Boeing 737s and Airbus A320s) and the powerful GE90 (for Boeing 777s), showcasing a blend of internal innovation and OEM collaboration.
+            </p>
+            <div>
+                <div class="mb-4 border-b border-gray-200">
+                    <nav class="flex space-x-4 -mb-px" aria-label="Tabs">
+                        <button class="tab-button active whitespace-nowrap py-3 px-5 border-b-2 font-medium text-sm" data-tab="cfm56">
+                            CFM56 Series
+                        </button>
+                        <button class="tab-button whitespace-nowrap py-3 px-5 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="ge90">
+                            GE90 Series
+                        </button>
+                    </nav>
+                </div>
+                <div id="cfm56Content" class="tab-content bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">CFM56 Engine Series (Boeing 737s, Airbus A320s)</h3>
+                    <p class="text-gray-700 leading-relaxed mb-3">
+                        Delta TechOps has extensive experience with the CFM56 series, dating back to 1982. This historical depth provides a rich dataset for APEX. While specific integration details are proprietary, CFM56 operational data feeds into APEX for condition-based monitoring and predictive insights.
+                    </p>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>Powers a significant portion of global narrow-body fleets.</li>
+                        <li>Delta services CFM56-5B and CFM56-7B models.</li>
+                        <li>Expertise extends to the successor, LEAP-1B, with a state-of-the-art test cell.</li>
+                        <li>Decades of data enhance APEX's predictive models, creating a powerful learning loop.</li>
+                        <li>Minimizes unexpected failures, ensuring high dispatch reliability for narrow-body aircraft.</li>
+                    </ul>
+                </div>
+                <div id="ge90Content" class="tab-content bg-white p-6 rounded-lg shadow-md" style="display: none;">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">GE90 Engine Series (Boeing 777s)</h3>
+                    <p class="text-gray-700 leading-relaxed mb-3">
+                        For its Boeing 777-200LRs powered by GE90 engines, Delta has a 10-year OnPointSM solution agreement with GE Aviation. This signifies a collaborative approach, leveraging GE's predictive capabilities alongside Delta's internal APEX analytics.
+                    </p>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>Powers wide-body aircraft like the Boeing 777.</li>
+                        <li>OnPointSM agreement provides customized maintenance, diagnostics, and support from GE.</li>
+                        <li>Hybrid strategy: combines internal APEX innovation with OEM expertise.</li>
+                        <li>Crucial for efficient long-term support as the GE90 fleet enters its regular maintenance phase.</li>
+                        <li>Ensures reliability for costly wide-body operations.</li>
+                    </ul>
+                </div>
+                <div class="mt-6 bg-gray-50 p-4 rounded-md">
+                    <h4 class="font-semibold text-lg text-[#2c3e50]">Adaptable & Granular Approach</h4>
+                    <p class="text-gray-600 text-sm">Delta's APEX platform tailors reliability programs per individual aircraft ("tail"), recognizing that even aircraft of the same model can have different maintenance needs based on operational history and wear patterns. This granular approach optimizes interventions for each specific asset.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="content-section pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">Quantifiable Impact of Predictive Maintenance</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">
+                Witness the tangible results of Delta's AI-driven predictive maintenance. This section presents key performance indicators and data, including significant reductions in operational disruptions and substantial MRO cost savings, illustrated through interactive charts and a summary table.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="chart-container">
+                    <canvas id="cancellationsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="costSavingsChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-4 text-[#2c3e50]">Key Operational and Financial Benefits</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value / Improvement</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supporting Information</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Reduction in Maintenance-Related Cancellations</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">95%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">From 5,600 (2010) to 55 (2018)</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Reduction in Unscheduled Maintenance Events</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">20%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Fewer unexpected repairs</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Annual Cost Savings</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Exceeding $100 Million</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Comprehensive program impact</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Increased Aircraft Utilization</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.5%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">More revenue-generating flight time</td>
+                            </tr>
+                             <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Reduction in Unscheduled Engine Removals</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">30%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Industry average for PdM</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <p class="mt-4 text-sm text-gray-600">Note: Cost savings figures vary (e.g., "up to $50 million" by IBM, "eight-digit figures" for APEX). The "$100 Million+" reflects a more mature program. These figures strongly validate the significant ROI.</p>
+            </div>
+        </section>
+
+        <section id="future" class="content-section pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">Strategic Partnerships, Innovation, and Future Outlook</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">
+                Delta's leadership in predictive maintenance is reinforced by a collaborative ecosystem, strategic partnerships, and continuous innovation. This section explores these aspects, including emerging MRO technologies and the challenges involved in this transformative journey.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">Collaborative Ecosystem & Partnerships</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>Airbus Digital Alliance:</strong> Member alongside Collins Aerospace, GE Aerospace, Liebherr for joint development of predictive solutions on Skywise platform.</li>
+                        <li><strong>OEM Relationships:</strong>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
+                                <li>GE Aviation: OnPointSM for GE90s.</li>
+                                <li>Pratt & Whitney: Expanded GTF engine MRO capacity, support for PW2000, PW4000-94.</li>
+                            </ul>
+                        </li>
+                        <li>Services all three next-gen engine platforms (P&W, Rolls-Royce, CFM).</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">Emerging Technologies in MRO</h3>
+                    <div id="techAccordion">
+                        <div class="accordion-item border-b">
+                            <button class="accordion-button w-full text-left py-3 px-2 font-medium hover:bg-gray-100 flex justify-between items-center">
+                                Digital Twins <span class="accordion-icon text-[#4A90E2]">+</span>
+                            </button>
+                            <div class="accordion-content hidden p-3 bg-gray-50">
+                                Real-time virtual replicas of engines for remote monitoring, testing, and failure simulation. Delta uses NVIDIA Omniverse for broader digital twin applications.
+                            </div>
+                        </div>
+                        <div class="accordion-item border-b">
+                            <button class="accordion-button w-full text-left py-3 px-2 font-medium hover:bg-gray-100 flex justify-between items-center">
+                                Drone Inspections <span class="accordion-icon text-[#4A90E2]">+</span>
+                            </button>
+                            <div class="accordion-content hidden p-3 bg-gray-50">
+                                Enhancing precision and efficiency of maintenance checks, especially for hard-to-reach areas.
+                            </div>
+                        </div>
+                        <div class="accordion-item border-b">
+                            <button class="accordion-button w-full text-left py-3 px-2 font-medium hover:bg-gray-100 flex justify-between items-center">
+                                AI-Driven Tail-Level Maintenance <span class="accordion-icon text-[#4A90E2]">+</span>
+                            </button>
+                            <div class="accordion-content hidden p-3 bg-gray-50">
+                                Customizing repairs for each aircraft based on unique operational history and wear patterns.
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <button class="accordion-button w-full text-left py-3 px-2 font-medium hover:bg-gray-100 flex justify-between items-center">
+                                Additive Manufacturing (3D Printing) <span class="accordion-icon text-[#4A90E2]">+</span>
+                            </button>
+                            <div class="accordion-content hidden p-3 bg-gray-50">
+                                Rapid fabrication of customized, complex parts, reducing waste, inventory, and aircraft downtime.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-3 text-[#2c3e50]">Challenges and Considerations</h3>
+                 <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li><strong>Cultural Shift:</strong> Overcoming traditional maintenance mindsets (70% of the challenge) through training and process change.</li>
+                    <li><strong>Data Security:</strong> Protecting sensitive operational data from cyber threats with robust cybersecurity measures.</li>
+                    <li><strong>Regulatory Compliance:</strong> Meeting stringent FAA/EASA requirements. Delta TechOps holds FAA/EASA Dual Release Capability.</li>
+                </ul>
+            </div>
+            <div class="mt-10 text-center bg-white p-8 rounded-lg shadow-xl">
+                <h3 class="text-2xl font-bold mb-4 text-[#2c3e50]">Conclusion: Delta's Leadership in MRO Transformation</h3>
+                <p class="text-gray-700 leading-relaxed max-w-2xl mx-auto">
+                    Delta Air Lines has demonstrably transformed its MRO operations through its AI-driven predictive maintenance strategy. The APEX program, supported by internal expertise and strategic partnerships, has yielded significant operational and financial benefits. Delta's success serves as a compelling case study, highlighting that AI and data analytics are essential for enhancing safety, optimizing efficiency, and achieving sustainable cost reductions in aviation MRO. Their ongoing investment in emerging technologies positions them as a continued leader in shaping the future of aviation maintenance.
+                </p>
+            </div>
+        </section>
+
+        <section id="ask-expert" class="content-section pt-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">Ask the Expert ✨</h2>
+            <p class="section-intro text-center max-w-3xl mx-auto">Have questions about Delta's predictive maintenance, AI in aviation, or engine reliability? Type your question below and get a concise answer from our AI expert!</p>
+            <div class="card p-6 sm:p-8 max-w-2xl mx-auto">
+                <textarea id="questionInput" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-[#4A90E2] focus:border-transparent resize-y" rows="4" placeholder="e.g., How does AI predict engine failures?"></textarea>
+                <button id="askButton" class="w-full bg-[#4A90E2] text-white py-3 rounded-lg font-semibold hover:bg-[#357ABD] transition-colors flex items-center justify-center">
+                    Ask Question ✨
+                    <span id="loadingSpinner" class="hidden ml-2 w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+                <div id="answerOutput" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-gray-800 hidden">
+                    <h4 class="font-semibold text-lg mb-2 text-blue-800">AI Expert's Answer:</h4>
+                    <p id="answerText"></p>
+                </div>
+                <div id="errorMessage" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+                    An error occurred. Please try again.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-6 mt-12">
+        <p>&copy; <span id="currentYear"></span> Interactive Report by Chayan Agarwal on Delta's Predictive Maintenance. All information based on the provided <a href="https://medium.com/@chayan.agarwal01/a-strategic-blueprint-for-engine-reliability-and-mro-cost-optimization-for-delta-air-lines-fc4c54719a9e" target="_blank" rel="noopener noreferrer">research report</a></p>
+        <p class="text-xs mt-1">The content provided is for educational and informational purposes only.</p>
+        <p class="text-xs mt-1">This is a conceptual SPA generated for illustrative purposes.</p>
+    </footer>
+
+    <div id="apexModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle" class="text-xl font-semibold mb-3">Modal Title</h3>
+            <p id="modalDetails" class="text-gray-700">Modal details go here.</p>
+            <button id="closeModal" class="mt-4 bg-[#4A90E2] text-white px-4 py-2 rounded hover:bg-[#357ABD]">Close</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            function updateActiveNav(targetId) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${targetId}`) {
+                        link.classList.add('active');
+                    }
+                });
+                 // For mobile menu links
+                document.querySelectorAll('#mobile-menu .nav-link').forEach(link => {
+                    link.classList.remove('active');
+                     if (link.getAttribute('href') === `#${targetId}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            function showSection(targetId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    }
+                });
+                updateActiveNav(targetId);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    showSection(targetId);
+                    if (mobileMenu.classList.contains('block') && !mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                        mobileMenu.classList.remove('block');
+                        mobileMenuButton.querySelectorAll('svg')[0].classList.remove('hidden');
+                        mobileMenuButton.querySelectorAll('svg')[1].classList.add('hidden');
+                    }
+                });
+            });
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                mobileMenu.classList.toggle('hidden', !isHidden);
+                mobileMenu.classList.toggle('block', isHidden);
+                mobileMenuButton.querySelectorAll('svg')[0].classList.toggle('hidden', isHidden);
+                mobileMenuButton.querySelectorAll('svg')[1].classList.toggle('hidden', !isHidden);
+            });
+            
+            const initialSection = window.location.hash ? window.location.hash.substring(1) : 'overview';
+            showSection(initialSection);
+
+            // Tabs for Engine Strategies
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    tabButtons.forEach(btn => btn.classList.remove('active', 'bg-[#4A90E2]', 'text-white'));
+                    this.classList.add('active', 'bg-[#4A90E2]', 'text-white');
+                    
+                    const targetTab = this.getAttribute('data-tab');
+                    tabContents.forEach(content => {
+                        if (content.id === `${targetTab}Content`) {
+                            content.style.display = 'block';
+                        } else {
+                            content.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // Accordion for Emerging Tech & Challenges
+            const accordionButtons = document.querySelectorAll('.accordion-button');
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    const icon = this.querySelector('.accordion-icon');
+                    if (content.style.display === 'block') {
+                        content.style.display = 'none';
+                        icon.textContent = '+';
+                    } else {
+                        content.style.display = 'block';
+                        icon.textContent = '-';
+                    }
+                });
+            });
+
+            // APEX Modal
+            const apexSteps = document.querySelectorAll('.apex-step');
+            const apexModal = document.getElementById('apexModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDetails = document.getElementById('modalDetails');
+            const closeModalButton = document.getElementById('closeModal');
+
+            apexSteps.forEach(step => {
+                step.addEventListener('click', function() {
+                    modalTitle.textContent = this.dataset.title;
+                    modalDetails.textContent = this.dataset.details;
+                    apexModal.style.display = 'flex';
+                });
+            });
+
+            closeModalButton.addEventListener('click', function() {
+                apexModal.style.display = 'none';
+            });
+
+            apexModal.addEventListener('click', function(event) {
+                if (event.target === apexModal) {
+                    apexModal.style.display = 'none';
+                }
+            });
+
+
+            // Chart.js Implementations
+            // Helper for label wrapping
+            function formatLabel(str, maxwidth){
+                let sections = [];
+                let words = str.split(" ");
+                let temp = "";
+
+                words.forEach((item, index) => {
+                    if(temp.length > 0) {
+                        temp += " " + item;
+                    } else {
+                        temp = item;
+                    }
+                    if(temp.length > maxwidth){
+                        sections.push(temp);
+                        temp = "";
+                    }
+                    if(index === words.length - 1 && temp.length > 0){
+                        sections.push(temp);
+                    }
+                });
+                return sections;
+            }
+
+            if (document.getElementById('cancellationsChart')) {
+                new Chart(document.getElementById('cancellationsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['2010', '2018'],
+                        datasets: [{
+                            label: 'Maintenance-Related Cancellations',
+                            data: [5600, 55],
+                            backgroundColor: ['#F5A623', '#4A90E2'],
+                            borderColor: ['darkorange', 'darkblue'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Number of Cancellations' } }
+                        },
+                        plugins: {
+                            title: { display: true, text: 'Reduction in Maintenance Cancellations', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (document.getElementById('costSavingsChart')) {
+                new Chart(document.getElementById('costSavingsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Annual Savings (APEX)', 'Overall Program Savings'],
+                        datasets: [{
+                            label: 'Estimated Annual Cost Savings (Millions USD)',
+                            data: [50, 100], // Using $50M for APEX specific, $100M+ for overall. Could be represented as a range or single points.
+                            backgroundColor: ['#4CAF50', '#8BC34A'],
+                            borderColor: ['darkgreen', 'green'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Savings (Millions USD)' } }
+                        },
+                        plugins: {
+                            title: { display: true, text: 'Annual MRO Cost Savings', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += '$' + context.parsed.y + 'M';
+                                            if (context.label === 'Overall Program Savings') label += '+';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            },
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+            // Gemini API Integration for "Ask the Expert"
+            const questionInput = document.getElementById('questionInput');
+            const askButton = document.getElementById('askButton');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const answerOutput = document.getElementById('answerOutput');
+            const answerText = document.getElementById('answerText');
+            const errorMessage = document.getElementById('errorMessage');
+
+            askButton.addEventListener('click', async () => {
+                const question = questionInput.value.trim();
+                if (!question) {
+                    errorMessage.textContent = 'Please enter a question.';
+                    errorMessage.classList.remove('hidden');
+                    answerOutput.classList.add('hidden');
+                    return;
+                }
+
+                answerOutput.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                askButton.disabled = true;
+                loadingSpinner.classList.remove('hidden');
+                answerText.textContent = ''; // Clear previous answer
+
+                const prompt = `You are an expert on Delta Air Lines' predictive maintenance strategy, specifically as described in the provided infographic. Answer the user's question concisely, drawing primarily from the information presented in the infographic. If the information is not directly available in the infographic, provide a general, brief, and relevant answer about aviation predictive maintenance. Keep answers under 100 words.
+                
+                Infographic Content Summary:
+                - Delta uses AI/ML (APEX program) to predict engine failures.
+                - Collects terabytes of sensor data (temp, pressure, vibration).
+                - Projects maintenance needs 18-24 months in advance.
+                - Achieved 95% reduction in maintenance cancellations (5600 in 2010 to 55 in 2018).
+                - Achieved $100M+ annual cost savings.
+                - Increased aircraft utilization by 2.5%.
+                - Works with CFM56 (Boeing 737s, Airbus A320s) and GE90 (Boeing 777s).
+                - Uses a hybrid strategy: internal APEX + OEM expertise (e.g., GE's OnPointSM).
+                - Focuses on tail-level customization.
+                - Engages in collaborative ecosystem (Airbus Digital Alliance).
+                - Explores emerging tech: Digital Twins, Drone Inspections, 3D Printing.
+                - Addresses challenges: Cultural Shift, Data Security, Regulatory Compliance.
+
+                User Question: ${question}`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Canvas will provide this at runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        answerText.textContent = text;
+                        answerOutput.classList.remove('hidden');
+                    } else {
+                        errorMessage.textContent = 'Could not get an answer. Please try rephrasing your question.';
+                        errorMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error calling Gemini API:', error);
+                    errorMessage.textContent = 'Failed to connect to the AI service. Please check your network or try again later.';
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    askButton.disabled = false;
+                    loadingSpinner.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
